@@ -5,7 +5,7 @@
                 <div class="shrink-0 flex items-center gap-2">
                     <a href="{{ Auth::check() ? route('dashboard') : route('productos.index') }}" class="flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-gold"></span>
-                        <span class="font-display font-bold text-lg text-ink tracking-tight">Proyecto Web</span>
+                        <span class="font-display font-bold text-lg text-ink tracking-tight">Bangtan Store</span>
                     </a>
                 </div>
 

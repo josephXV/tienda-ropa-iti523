@@ -19,13 +19,13 @@ export default {
             colors: {
                 ink: '#182430',
                 forest: {
-                    DEFAULT: '#1F5C4F',
-                    dark: '#153F37',
-                    light: '#2E7566',
+                    DEFAULT: '#5f2568',
+                    dark: '#3f1846',
+                    light: '#9b6c9a',
                 },
                 gold: {
-                    DEFAULT: '#C9A227',
-                    light: '#E4C662',
+                    DEFAULT: '#87588e',
+                    light: '#b37eb5',
                 },
                 cream: '#F8F4EC',
                 card: '#FFFFFF',
