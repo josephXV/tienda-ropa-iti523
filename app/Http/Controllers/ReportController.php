@@ -32,7 +32,7 @@ class ReportController extends Controller
         $resumenPorMes = Order::where('estado', 'pagado')
             ->whereYear('created_at', $anio)
             ->select(
-                DB::raw('DATE_FORMAT(created_at, "%m") as mes'),
+                DB::raw($this->expresionMes('created_at').' as mes'),
                 DB::raw('COUNT(*) as total_ordenes'),
                 DB::raw('SUM(total) as total_ventas')
             )
@@ -75,5 +75,19 @@ class ReportController extends Controller
         $pdf = Pdf::loadView('reportes.ventas_por_cliente', compact('ordenesPorCliente', 'resumenPorCliente', 'desde', 'hasta'));
 
         return $pdf->download('reporte-ventas-cliente-detallado.pdf');
+    }
+
+    /**
+     * Devuelve la expresion SQL para extraer el mes (01-12) de una columna de fecha,
+     * segun el driver de la conexion activa. SQLite no tiene DATE_FORMAT().
+     */
+    protected function expresionMes(string $columna): string
+    {
+        return match (DB::connection()->getDriverName()) {
+            'sqlite' => "strftime('%m', {$columna})",
+            'pgsql' => "to_char({$columna}, 'MM')",
+            'sqlsrv' => "FORMAT({$columna}, 'MM')",
+            default => "DATE_FORMAT({$columna}, '%m')",
+        };
     }
 }
