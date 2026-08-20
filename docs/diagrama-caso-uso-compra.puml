@@ -1,0 +1,98 @@
+@startuml diagrama-caso-uso-compra
+' Diagrama de casos de uso - Proceso de compra
+' Tienda de Ropa ITI-523 (Laravel + Blade + Tailwind)
+' Refleja el flujo real de routes/web.php, CartController y OrderController.
+
+left to right direction
+skinparam packageStyle rectangle
+skinparam shadowing false
+skinparam actorStyle awesome
+
+actor "Cliente" as Cliente
+actor "Pasarela de pago\n(simulada)" as Pasarela
+
+rectangle "Tienda de Ropa ITI-523" {
+
+  ' --- Catalogo (publico, sin autenticacion) ---
+  usecase "Ver catalogo" as UC_CATALOGO
+  usecase "Ver detalle de producto" as UC_DETALLE
+  usecase "Filtrar / buscar productos" as UC_FILTRAR
+  usecase "Registrar producto visto\n(cookie productos_vistos)" as UC_VISTOS
+
+  ' --- Autenticacion ---
+  usecase "Iniciar sesion / Registrarse" as UC_LOGIN
+
+  ' --- Carrito (requiere auth) ---
+  usecase "Agregar al carrito" as UC_AGREGAR
+  usecase "Ver carrito" as UC_VERCARRITO
+  usecase "Actualizar cantidad" as UC_ACTUALIZAR
+  usecase "Eliminar producto del carrito" as UC_ELIMINAR
+  usecase "Validar stock disponible" as UC_STOCK
+  usecase "Calcular subtotal" as UC_SUBTOTAL
+
+  ' --- Checkout / orden ---
+  usecase "Checkout" as UC_CHECKOUT
+  usecase "Calcular totales\n(subtotal + IVA 13% + envio)" as UC_TOTALES
+  usecase "Realizar pago" as UC_PAGO
+  usecase "Crear orden e items" as UC_CREARORDEN
+  usecase "Descontar stock" as UC_DESCONTAR
+  usecase "Registrar pago" as UC_REGPAGO
+  usecase "Vaciar carrito" as UC_VACIAR
+  usecase "Ver confirmacion de orden" as UC_CONFIRMACION
+  usecase "Ver historial de ordenes" as UC_HISTORIAL
+
+  ' --- Reportes ---
+  usecase "Generar reportes PDF" as UC_REPORTES
+}
+
+' ------- Asociaciones del actor -------
+Cliente --> UC_CATALOGO
+Cliente --> UC_DETALLE
+Cliente --> UC_LOGIN
+Cliente --> UC_AGREGAR
+Cliente --> UC_VERCARRITO
+Cliente --> UC_CHECKOUT
+Cliente --> UC_PAGO
+Cliente --> UC_CONFIRMACION
+Cliente --> UC_HISTORIAL
+Cliente --> UC_REPORTES
+
+UC_REGPAGO --> Pasarela
+
+' ------- Relaciones include (pasos obligatorios del flujo) -------
+UC_DETALLE    .> UC_VISTOS      : <<include>>
+UC_AGREGAR    .> UC_STOCK       : <<include>>
+UC_VERCARRITO .> UC_SUBTOTAL    : <<include>>
+UC_CHECKOUT   .> UC_TOTALES     : <<include>>
+UC_PAGO       .> UC_STOCK       : <<include>>
+UC_PAGO       .> UC_TOTALES     : <<include>>
+UC_PAGO       .> UC_CREARORDEN  : <<include>>
+UC_PAGO       .> UC_DESCONTAR   : <<include>>
+UC_PAGO       .> UC_REGPAGO     : <<include>>
+UC_PAGO       .> UC_VACIAR      : <<include>>
+
+' ------- Relaciones extend (pasos opcionales / condicionales) -------
+UC_FILTRAR    .> UC_CATALOGO    : <<extend>>\n(hay filtros en la URL)
+UC_DETALLE    .> UC_CATALOGO    : <<extend>>
+UC_ACTUALIZAR .> UC_VERCARRITO  : <<extend>>
+UC_ELIMINAR   .> UC_VERCARRITO  : <<extend>>
+UC_LOGIN      .> UC_AGREGAR     : <<extend>>\n(usuario no autenticado)
+
+note bottom of UC_LOGIN
+  Las rutas de carrito, checkout, ordenes
+  y reportes estan bajo el middleware "auth":
+  si el usuario no ha iniciado sesion,
+  Laravel lo redirige a /login y luego
+  continua el flujo de compra.
+end note
+
+note right of UC_PAGO
+  OrderController::procesarPago()
+  ejecuta todo dentro de una transaccion:
+  valida stock -> crea la orden en estado
+  "pagado" -> crea los OrderItems ->
+  descuenta stock -> registra el Payment
+  -> vacia el carrito -> redirige a la
+  confirmacion.
+end note
+@enduml
